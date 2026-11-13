@@ -13,10 +13,18 @@ services:
       - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION:-us-east-1}
     volumes:
       - ${LOCALSTACK_VOLUME_DIR:-./volume}:/var/lib/localstack
+      - ./init/ready.d:/etc/localstack/init/ready.d:ro
+      - ./init:/opt/localstack-seed:ro
       # Docker Desktop en este Mac expone el socket aquí, no en /var/run/docker.sock.
       - ${HOME}/.docker/run/docker.sock:/var/run/docker.sock
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:4566/_localstack/health')",
+        ]
       interval: 10s
       timeout: 5s
       retries: 12

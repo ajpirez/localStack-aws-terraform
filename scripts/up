@@ -24,3 +24,4 @@ echo
 echo "Gateway:  http://localhost:4566"
 echo "Web UI:   https://app.localstack.cloud"
 echo "Endpoint: https://localhost.localstack.cloud:4566"
+echo "Seed:     ./scripts/seed"

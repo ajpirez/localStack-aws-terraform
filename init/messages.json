@@ -1,0 +1,30 @@
+[
+  {
+    "type": "order.created",
+    "orderId": "ord-1001",
+    "amount": 42.5,
+    "currency": "USD",
+    "customerId": "cust-ana"
+  },
+  {
+    "type": "order.created",
+    "orderId": "ord-1002",
+    "amount": 18,
+    "currency": "USD",
+    "customerId": "cust-luis"
+  },
+  {
+    "type": "order.paid",
+    "orderId": "ord-1002",
+    "amount": 18,
+    "currency": "USD",
+    "customerId": "cust-luis"
+  },
+  {
+    "type": "order.cancelled",
+    "orderId": "ord-1003",
+    "amount": 75,
+    "currency": "USD",
+    "customerId": "cust-marta"
+  }
+]
