@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+export DOCKER_HOST="${DOCKER_HOST:-unix://${HOME}/.docker/run/docker.sock}"
+
+if [[ ! -f .env ]]; then
+  cp .env.example .env
+  echo "Falta el token. Edita .env, pega LOCALSTACK_AUTH_TOKEN y vuelve a ejecutar scripts/up."
+  echo "Cuenta gratis: https://app.localstack.cloud"
+  exit 1
+fi
+
+if ! grep -Eq '^LOCALSTACK_AUTH_TOKEN=.+' .env; then
+  echo "LOCALSTACK_AUTH_TOKEN está vacío en .env."
+  echo "Pega un Developer Auth Token de https://app.localstack.cloud/workspace/auth-tokens"
+  exit 1
+fi
+
+docker compose up -d
+docker compose ps
+echo
+echo "Gateway:  http://localhost:4566"
+echo "Web UI:   https://app.localstack.cloud"
+echo "Endpoint: https://localhost.localstack.cloud:4566"
