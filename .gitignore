@@ -1,2 +1,6 @@
 .env
 volume/
+.terraform/
+*.tfstate
+*.tfstate.*
+terraform/build/

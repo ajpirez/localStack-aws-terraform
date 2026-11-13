@@ -13,8 +13,6 @@ services:
       - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION:-us-east-1}
     volumes:
       - ${LOCALSTACK_VOLUME_DIR:-./volume}:/var/lib/localstack
-      - ./init/ready.d:/etc/localstack/init/ready.d:ro
-      - ./init:/opt/localstack-seed:ro
       # Docker Desktop en este Mac expone el socket aquí, no en /var/run/docker.sock.
       - ${HOME}/.docker/run/docker.sock:/var/run/docker.sock
     healthcheck:
