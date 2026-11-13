@@ -163,3 +163,50 @@ Si cambias un `.py` o `messages.json`, otro `terraform apply` desde `terraform/`
 **El contenedor no arranca.** Revisa que Docker Desktop esté abierto y que `LOCALSTACK_AUTH_TOKEN` en `.env` no esté vacío.
 
 **`EntityAlreadyExists` en el apply.** Esos nombres ya existen en LocalStack y Terraform no los tiene en su estado. Con la persistencia apagada, `./scripts/down`, `./scripts/up` y otro `terraform apply` dejan la cuenta limpia y la vuelven a crear.
+
+## Spec Kit
+
+[Spec Kit](https://github.com/github/spec-kit) es el flujo de GitHub para escribir una especificación antes de implementar. En este repo está instalado para Cursor.
+
+El CLI `specify` 1.4.0 está instalado en la máquina. El proyecto ya fue inicializado: las plantillas viven en `.specify/` y los comandos de Cursor en `.cursor/skills/`.
+
+Para instalarlo de nuevo en otra máquina hace falta `uv` y Python 3.11 o más nuevo:
+
+```bash
+uv tool install specify-cli --force --from git+https://github.com/github/spec-kit.git@v1.4.0
+specify version
+```
+
+Desde la raíz de este repo, para volver a generar los archivos sin borrar el código de LocalStack ni Terraform:
+
+```bash
+specify init --here --force --non-interactive --integration cursor-agent --script sh
+```
+
+`--here` usa este directorio. `--force` mezcla los archivos en un directorio que ya tiene código. `--integration cursor-agent` instala las skills de Cursor. `--script sh` deja los scripts en bash.
+
+Qué quedó en el repo:
+
+| Ruta | Qué es |
+|---|---|
+| `.specify/memory/constitution.md` | Principios del proyecto. Empieza como plantilla. |
+| `.specify/templates/` | Plantillas de spec, plan, tareas y checklist. |
+| `.specify/scripts/bash/` | Scripts que usan las skills para crear specs y planes. |
+| `.specify/workflows/speckit/` | Definición del flujo. |
+| `.cursor/skills/speckit-*/SKILL.md` | Comandos que se invocan en el chat de Cursor. |
+
+`.specify/feature.json` es estado local de la feature activa y no se comparte. Ya está ignorado por `.specify/.gitignore`.
+
+En el chat de Cursor, en este proyecto, el orden es:
+
+1. `/speckit-constitution` fija los principios del repo.
+2. `/speckit-specify` escribe la especificación de un cambio a partir de una descripción.
+3. `/speckit-clarify` es opcional. Hace preguntas si la spec es ambigua. Va antes del plan.
+4. `/speckit-plan` arma el plan de implementación.
+5. `/speckit-checklist` es opcional. Revisa que la spec esté completa.
+6. `/speckit-tasks` parte el plan en tareas.
+7. `/speckit-analyze` es opcional. Cruza spec, plan y tareas antes de implementar.
+8. `/speckit-implement` ejecuta las tareas.
+9. `/speckit-converge` compara el código con la spec y agrega el trabajo que falta.
+
+Estos comandos no sustituyen a Terraform ni a LocalStack. Describen el próximo cambio. La infraestructura de este repo se sigue creando con `./scripts/up` y `terraform apply`.
