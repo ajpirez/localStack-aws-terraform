@@ -13,7 +13,69 @@ flowchart LR
   publisher["Lambda demo-publisher"] --> topic
 ```
 
-1. `terraform/messages.json` tiene cuatro pedidos: `ord-1001`, `ord-1002` creado, `ord-1002` pagado y `ord-1003` cancelado.
+1. `terraform/messages.`
+   ```tf
+   resource "aws_lambda_function" "publisher" {
+     function_name    = "demo-publisher"
+     role             = aws_iam_role.publisher.arn
+     runtime          = "python3.12"
+     handler          = "publisher.handler"
+     filename         = data.archive_file.publisher.output_path
+     source_code_hash = data.archive_file.publisher.output_base64sha256
+     architectures    = ["arm64"]
+     timeout          = 15
+     memory_size      = 256
+     tags             = local.tags
+
+     environment {
+       variables = {
+         AWS_DEFAULT_REGION = local.region
+         AWS_ENDPOINT_URL   = "http://localhost.localstack.cloud:4566"
+         TOPIC_ARN          = aws_sns_topic.events.arn
+       }
+     }
+   }resource "aws_lambda_function" "publisher" {
+     function_name    = "demo-publisher"
+     role             = aws_iam_role.publisher.arn
+     runtime          = "python3.12"
+     handler          = "publisher.handler"
+     filename         = data.archive_file.publisher.output_path
+     source_code_hash = data.archive_file.publisher.output_base64sha256
+     architectures    = ["arm64"]
+     timeout          = 15
+     memory_size      = 256
+     tags             = local.tags
+
+     environment {
+       variables = {
+         AWS_DEFAULT_REGION = local.region
+         AWS_ENDPOINT_URL   = "http://localhost.localstack.cloud:4566"
+         TOPIC_ARN          = aws_sns_topic.events.arn
+       }
+     }
+   }resource "aws_lambda_function" "publisher" {
+     function_name    = "demo-publisher"
+     role             = aws_iam_role.publisher.arn
+     runtime          = "python3.12"
+     handler          = "publisher.handler"
+     filename         = data.archive_file.publisher.output_path
+     source_code_hash = data.archive_file.publisher.output_base64sha256
+     architectures    = ["arm64"]
+     timeout          = 15
+     memory_size      = 256
+     tags             = local.tags
+
+     environment {
+       variables = {
+         AWS_DEFAULT_REGION = local.region
+         AWS_ENDPOINT_URL   = "http://localhost.localstack.cloud:4566"
+         TOPIC_ARN          = aws_sns_topic.events.arn
+       }
+     }
+   }
+   ```
+
+   `json` tiene cuatro pedidos: `ord-1001`, `ord-1002` creado, `ord-1002` pagado y `ord-1003` cancelado.
 2. Terraform los publica en el topic **demo-events**. Un topic avisa a todas las colas suscritas.
 3. **demo-orders** recibe el pedido y despierta a **demo-worker**. Esa Lambda lo lee y lo borra, así que esa cola queda vacía.
 4. **demo-orders-audit** recibe la misma copia y nadie la lee. Ahí quedan los mensajes para mirarlos.
@@ -158,11 +220,37 @@ Si cambias un `.py` o `messages.json`, otro `terraform apply` desde `terraform/`
 
 ## Errores frecuentes
 
-**`No configuration files`.** El comando se lanzó fuera de `terraform/`. Entra a esa carpeta y repítelo.
+`No configuration files`**.** El comando se lanzó fuera de `terraform/`. Entra a esa carpeta y repítelo.
 
 **El contenedor no arranca.** Revisa que Docker Desktop esté abierto y que `LOCALSTACK_AUTH_TOKEN` en `.env` no esté vacío.
 
-**`EntityAlreadyExists` en el apply.** Esos nombres ya existen en LocalStack y Terraform no los tiene en su estado. Con la persistencia apagada, `./scripts/down`, `./scripts/up` y otro `terraform apply` dejan la cuenta limpia y la vuelven a crear.
+`EntityAlreadyExists` **en el apply.** Esos nombres ya existen en LocalStack y Terraform no los tiene en su estado. Con la persistencia apagada, `./scripts/down`, `./scripts/up` y otro `terraform apply` dejan la cuenta limpia y la vuelven a crear.
+
+## Trabajos con demanda
+
+Una cola nueva, `demo-jobs`, recibe trabajos de un API Nest. Un subscriber en un cluster kind los consume, y KEDA sube o baja las réplicas según cuántos mensajes haya visibles. El circuito de pedidos (`demo-events`, `demo-orders`, las Lambdas) no cambia.
+
+El API escucha `POST /jobs` y `GET /health`. El CronJob llama a ese mismo `POST` cada minuto con `{"type":"scheduled"}`. Un trabajo con `"type":"fail"` hace fallar al subscriber a propósito para que, al tercer intento, caiga en `demo-jobs-dlq`.
+
+Desde la raíz, con LocalStack ya levantado:
+
+```bash
+cd terraform && terraform apply
+cd ../jobs && bun install && bun test && docker build -t jobs-api:local .
+cd ..
+kind create cluster --config k8s/kind-config.yaml
+kind load docker-image jobs-api:local --name localstack-jobs
+helm repo add kedacore https://kedacore.github.io/charts
+helm upgrade --install keda kedacore/keda --namespace keda --create-namespace
+kubectl apply -f k8s/namespace.yaml
+kubectl apply -f k8s/api-deployment.yaml
+kubectl apply -f k8s/worker-deployment.yaml
+kubectl apply -f k8s/scaledobject.yaml
+kubectl apply -f k8s/cronjob.yaml
+kubectl -n keda patch deployment keda-operator --type strategic --patch-file k8s/keda-operator-hostalias.yaml
+```
+
+El API queda en `http://127.0.0.1:3000`. Los pods llegan a LocalStack por `host.docker.internal`, que en Docker Desktop es `192.168.65.254`. Ese alias también va en el operador de KEDA, porque es quien lee la profundidad de la cola. Los pasos de comprobación están en `specs/001-keda-jobs/quickstart.md`.
 
 ## Spec Kit
 

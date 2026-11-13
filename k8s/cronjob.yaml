@@ -1,0 +1,29 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: jobs-schedule
+  namespace: jobs
+spec:
+  schedule: "* * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: submit
+              image: curlimages/curl:8.11.1
+              args:
+                - -sS
+                - -f
+                - -X
+                - POST
+                - http://jobs-api.jobs.svc.cluster.local:3000/jobs
+                - -H
+                - "content-type: application/json"
+                - -d
+                - '{"type":"scheduled"}'
