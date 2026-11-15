@@ -1,0 +1,109 @@
+# Secreto requerido: LOCALSTACK_AUTH_TOKEN
+# Settings → Secrets and variables → Actions
+name: ci
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.4
+      - name: Tests del API y del worker
+        working-directory: jobs
+        run: |
+          bun install --frozen-lockfile
+          bun test
+
+  stack:
+    needs: unit
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      LOCALSTACK_AUTH_TOKEN: ${{ secrets.LOCALSTACK_AUTH_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+
+      - name: kind, kubectl y helm
+        run: |
+          sudo sysctl fs.inotify.max_user_watches=524288
+          sudo sysctl fs.inotify.max_user_instances=512
+          curl -fsSL -o kind https://kind.sigs.k8s.io/dl/v0.33.0/kind-linux-amd64
+          chmod +x kind && sudo mv kind /usr/local/bin/kind
+          curl -fsSL -o kubectl https://dl.k8s.io/release/v1.33.4/bin/linux/amd64/kubectl
+          chmod +x kubectl && sudo mv kubectl /usr/local/bin/kubectl
+          curl -fsSL https://get.helm.sh/helm-v3.17.3-linux-amd64.tar.gz | tar -xz
+          sudo mv linux-amd64/helm /usr/local/bin/helm
+
+      - name: LocalStack
+        run: ./scripts/up
+
+      - name: Terraform
+        working-directory: terraform
+        run: |
+          terraform init -input=false
+          terraform apply -input=false -auto-approve
+
+      - name: Imagen y cluster
+        run: |
+          docker build -t jobs-api:local jobs
+          kind create cluster --config k8s/kind-config.yaml
+          kind load docker-image jobs-api:local --name localstack-jobs
+          docker network connect kind localstack-main
+          docker inspect -f '{{.NetworkSettings.Networks.kind.IPAddress}}' localstack-main > /tmp/localstack-ip
+
+      - name: KEDA y manifiestos
+        run: |
+          helm repo add kedacore https://kedacore.github.io/charts
+          helm repo update
+          helm upgrade --install keda kedacore/keda --namespace keda --create-namespace --wait --timeout 5m
+          ip=$(cat /tmp/localstack-ip)
+          test -n "$ip"
+          sed -i "s/192.168.65.254/${ip}/g" k8s/*.yaml
+          kubectl apply -f k8s/namespace.yaml
+          kubectl apply -f k8s/api-deployment.yaml
+          kubectl apply -f k8s/worker-deployment.yaml
+          kubectl apply -f k8s/scaledobject.yaml
+          kubectl apply -f k8s/cronjob.yaml
+          kubectl -n keda patch deployment keda-operator --type strategic --patch-file k8s/keda-operator-hostalias.yaml
+          kubectl -n keda rollout status deployment/keda-operator --timeout=180s
+          kubectl -n jobs rollout status deployment/jobs-api --timeout=180s
+
+      - name: Aceptación, worker y horario
+        run: |
+          curl -fsS http://127.0.0.1:3000/health | grep -q '"status":"ok"'
+          curl -fsS -X POST http://127.0.0.1:3000/jobs \
+            -H 'content-type: application/json' \
+            -d '{"type":"manual","jobId":"job-ci-1"}' | grep -q '"jobId":"job-ci-1"'
+          test "$(kubectl -n jobs get scaledobject jobs-worker -o jsonpath='{.spec.maxReplicaCount}')" = "5"
+          appeared=0
+          for _ in $(seq 1 24); do
+            if kubectl -n jobs get pod -l app=jobs-worker --no-headers 2>/dev/null | grep -q .; then
+              appeared=1
+              break
+            fi
+            sleep 5
+          done
+          test "$appeared" = "1"
+          kubectl -n jobs wait --for=condition=ready pod -l app=jobs-worker --timeout=120s
+          found=0
+          for _ in $(seq 1 24); do
+            if kubectl -n jobs logs -l app=jobs-worker --tail=50 | grep -q '"jobId":"job-ci-1"'; then
+              found=1
+              break
+            fi
+            sleep 5
+          done
+          test "$found" = "1"
+          kubectl -n jobs create job ci-schedule --from=cronjob/jobs-schedule
+          kubectl -n jobs wait --for=condition=complete job/ci-schedule --timeout=120s

@@ -17,7 +17,7 @@ resource "aws_lambda_function" "worker" {
   handler          = "worker.handler"
   filename         = data.archive_file.worker.output_path
   source_code_hash = data.archive_file.worker.output_base64sha256
-  architectures    = ["arm64"]
+  architectures    = [var.lambda_architecture]
   timeout          = 15
   memory_size      = 256
   tags             = local.tags
@@ -36,7 +36,7 @@ resource "aws_lambda_function" "publisher" {
   handler          = "publisher.handler"
   filename         = data.archive_file.publisher.output_path
   source_code_hash = data.archive_file.publisher.output_base64sha256
-  architectures    = ["arm64"]
+  architectures    = [var.lambda_architecture]
   timeout          = 15
   memory_size      = 256
   tags             = local.tags

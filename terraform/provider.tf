@@ -19,6 +19,12 @@ provider "aws" {
 
 data "aws_caller_identity" "current" {}
 
+variable "lambda_architecture" {
+  type        = string
+  default     = "arm64"
+  description = "CPU de las Lambdas. arm64 en esta Mac. El runner de GitHub usa x86_64."
+}
+
 locals {
   region = "us-east-1"
   tags   = { Project = "localstack-demo" }

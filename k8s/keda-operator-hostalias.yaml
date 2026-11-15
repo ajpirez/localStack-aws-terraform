@@ -1,0 +1,9 @@
+spec:
+  template:
+    spec:
+      hostAliases:
+        - ip: "192.168.65.254"
+          hostnames:
+            - host.docker.internal
+            - localhost.localstack.cloud
+            - sqs.us-east-1.localhost.localstack.cloud

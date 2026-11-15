@@ -4,3 +4,4 @@ volume/
 *.tfstate
 *.tfstate.*
 terraform/build/
+jobs/node_modules/

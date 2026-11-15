@@ -14,6 +14,10 @@ def handler(event, context):
             payload = json.loads(body)
         except json.JSONDecodeError:
             payload = {"raw": body}
+
+        if payload.get("orderId") == "ord-poison":
+            raise RuntimeError("fallo de prueba")
+
         item = {
             "messageId": record.get("messageId"),
             "orderId": payload.get("orderId"),

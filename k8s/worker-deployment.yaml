@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jobs-worker
+  namespace: jobs
+spec:
+  replicas: 0
+  selector:
+    matchLabels:
+      app: jobs-worker
+  template:
+    metadata:
+      labels:
+        app: jobs-worker
+    spec:
+      hostAliases:
+        - ip: "192.168.65.254"
+          hostnames:
+            - host.docker.internal
+            - localhost.localstack.cloud
+            - sqs.us-east-1.localhost.localstack.cloud
+      containers:
+        - name: worker
+          image: jobs-api:local
+          imagePullPolicy: IfNotPresent
+          command: ["bun", "src/worker.ts"]
+          envFrom:
+            - secretRef:
+                name: localstack-aws
