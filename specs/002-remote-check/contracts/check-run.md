@@ -11,7 +11,7 @@ A published change produces one check run. The run passes only when every line b
 ## Infrastructure
 
 - `terraform apply` from `terraform/` finishes without error, including the invocation of the publisher function.
-- The functions are built for the CPU of the machine running the check. On this Mac that CPU stays arm64.
+- The function image that starts matches the machine running the check. The declared CPU does not choose that image. On this Mac the image that starts stays arm64.
 - The order pipeline and `demo-jobs` both exist afterward.
 
 ## Acceptance and worker
@@ -28,4 +28,4 @@ A published change produces one check run. The run passes only when every line b
 ## Developer machine
 
 - On this Mac, `./scripts/up` still mounts `~/.docker/run/docker.sock`.
-- On this Mac, a `terraform apply` without an extra variable still builds the functions for arm64.
+- On this Mac, a `terraform apply` without an extra variable still records the functions as arm64, and the image that starts is still arm64.

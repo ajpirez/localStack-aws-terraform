@@ -8,6 +8,7 @@ No new stored records. The check observes entities that already exist.
 - **Outcome**: pass or fail
 - **Lifetime**: the runner machine is discarded at the end
 - **Secret**: `LOCALSTACK_AUTH_TOKEN` is present in the run environment and absent from tracked files
+- **Function image**: the image of the machine running the check. The CPU declared on the function does not choose it. On this Mac that image is arm64.
 
 ## Accepted job
 

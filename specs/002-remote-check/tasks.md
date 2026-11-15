@@ -115,3 +115,8 @@ description: "Task list for check the lab on every change"
 
 - [US1], [US2], and [US3] map to the stories in spec.md
 - The check does not pause the worker to force five pods
+
+## Phase 7: Convergence
+
+- [x] T010 CRITICAL Set `LAMBDA_IGNORE_ARCHITECTURE=1` on the LocalStack service in `docker-compose.yml` so the runtime image follows the machine running `./scripts/up` per FR-011 (missing)
+- [x] T011 CRITICAL Remove `TF_VAR_lambda_architecture` from the Terraform step in `.github/workflows/ci.yml` so the declared CPU does not choose the function image per FR-011 (contradicts)

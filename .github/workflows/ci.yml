@@ -50,8 +50,6 @@ jobs:
 
       - name: Terraform
         working-directory: terraform
-        env:
-          TF_VAR_lambda_architecture: x86_64
         run: |
           terraform init -input=false
           terraform apply -input=false -auto-approve

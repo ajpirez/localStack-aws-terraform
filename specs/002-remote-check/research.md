@@ -18,11 +18,11 @@
 
 **Alternatives considered**: Publishing port 4566 on every interface and using the bridge gateway is fragile on the kind network. Hard-coding a second IP in the manifests would break the Mac.
 
-## Decision: Lambdas follow the CPU of the machine running Terraform
+## Decision: LocalStack ignores the declared CPU and uses the machine image
 
-**Rationale**: The check failed with `exec format error` on `/var/runtime/bootstrap` because both functions were fixed to arm64 while the runner is x86_64. FR-011 says a recreated function must run on the CPU of the machine doing the check, and this Mac keeps the CPU it already uses. `lambda_architecture` defaults to `arm64`. The stack job sets `TF_VAR_lambda_architecture=x86_64`.
+**Rationale**: The check failed with `exec format error` on `/var/runtime/bootstrap` while the functions were arm64 and the runner is x86_64. Setting `TF_VAR_lambda_architecture=x86_64` still lets LocalStack start the image named by the declared CPU (`--platform linux/arm64` or `linux/amd64`). FR-011 says the declared CPU must not choose the image. `LAMBDA_IGNORE_ARCHITECTURE=1` on the LocalStack service makes that choice empty, and Docker pulls the image of the machine running the container. The value has to be in `docker-compose.yml`, because an environment variable on the workflow step does not enter the container. On this Mac the machine image is arm64, so the running functions stay on the CPU they already use. The Terraform default stays `arm64`. The workflow does not set `TF_VAR_lambda_architecture`.
 
-**Alternatives considered**: Leaving both functions on arm64 keeps the Mac working and makes `terraform apply` fail on the runner. Switching the default to x86_64 would break invocation on this Mac.
+**Alternatives considered**: Keeping `TF_VAR_lambda_architecture=x86_64` makes the declaration choose the image, which the clarification rejected, and the same `exec format error` can remain. Switching the Terraform default to x86_64 would change the declaration used on this Mac. Installing QEMU so the runner can execute an arm64 image keeps the wrong image and slows the check.
 
 ## Decision: One job proves the worker; the schedule runs once
 
