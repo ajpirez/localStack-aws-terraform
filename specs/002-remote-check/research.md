@@ -29,3 +29,9 @@
 **Rationale**: The worker deletes a message in under a second, and KEDA counts every 10 seconds. Twenty-five messages with the worker running do not stay visible long enough to show five pods. The check submits `job-ci-1`, waits until a worker logs it, and reads `maxReplicaCount` equal to 5. It then creates one Job from `jobs-schedule` so the schedule path runs without waiting for the next minute.
 
 **Alternatives considered**: Pausing the worker with `sleep 300` shows five pods and leaves the cluster in a state the check would have to undo. Waiting for the clock makes the check fail when the minute boundary is unlucky.
+
+## Decision: Wait until a worker exists, then require it to be ready
+
+**Rationale**: The worker deployment starts at zero replicas. KEDA raises that count only after it sees the waiting job, and it looks every 10 seconds. `kubectl wait` on the worker label exits at once with `no matching resources found` when no pod exists yet, so the check reports a false failure. FR-006 says a waiting job is not an immediate failure. The stack job polls for up to two minutes until one pod with `app=jobs-worker` exists, then waits for that pod to be ready, then reads the log for `job-ci-1`. Two minutes covers the queue poll and the pod start, and stays inside the 40-minute limit. If no pod appears, the check fails.
+
+**Alternatives considered**: Calling `kubectl wait` immediately treats a normal scale-from-zero as a failure. Raising the deployment above zero would leave a worker running while idle, which the spec keeps as the resting state. Pausing consumption to hold the pod up is the manual five-pod demonstration, not this check.

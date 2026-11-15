@@ -86,6 +86,15 @@ jobs:
             -H 'content-type: application/json' \
             -d '{"type":"manual","jobId":"job-ci-1"}' | grep -q '"jobId":"job-ci-1"'
           test "$(kubectl -n jobs get scaledobject jobs-worker -o jsonpath='{.spec.maxReplicaCount}')" = "5"
+          appeared=0
+          for _ in $(seq 1 24); do
+            if kubectl -n jobs get pod -l app=jobs-worker --no-headers 2>/dev/null | grep -q .; then
+              appeared=1
+              break
+            fi
+            sleep 5
+          done
+          test "$appeared" = "1"
           kubectl -n jobs wait --for=condition=ready pod -l app=jobs-worker --timeout=120s
           found=0
           for _ in $(seq 1 24); do

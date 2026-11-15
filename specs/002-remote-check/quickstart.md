@@ -15,7 +15,7 @@ The unit job runs `bun test` in `jobs/`. The stack job then:
 1. Runs `./scripts/up`. LocalStack ignores the CPU declared on the functions and starts the image of this machine.
 2. Runs `terraform apply` from `terraform/` with no architecture variable.
 3. Builds `jobs-api:local`, creates the kind cluster, and installs KEDA.
-4. Accepts `job-ci-1` and waits for that identifier in a worker log.
+4. Accepts `job-ci-1`, waits until a worker appears and is ready, then waits for that identifier in a worker log. A first look with no worker is not a failure.
 5. Runs the schedule path once and expects that run to complete.
 
 A green run is a pass. A red run is a fail. The log of the stack job is the record.

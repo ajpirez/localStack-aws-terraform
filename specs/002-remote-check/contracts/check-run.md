@@ -18,7 +18,9 @@ A published change produces one check run. The run passes only when every line b
 
 - `GET /health` returns a body with `"status":"ok"`.
 - `POST /jobs` with `{"type":"manual","jobId":"job-ci-1"}` returns a body that contains `"jobId":"job-ci-1"`.
+- After that acceptance, the check waits until at least one worker exists and is ready. Finding no worker on the first look is not a failure.
 - A worker log line contains `"jobId":"job-ci-1"`.
+- If no worker appears before the check ends, the run fails.
 
 ## Schedule and bound
 

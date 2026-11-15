@@ -120,3 +120,7 @@ description: "Task list for check the lab on every change"
 
 - [x] T010 CRITICAL Set `LAMBDA_IGNORE_ARCHITECTURE=1` on the LocalStack service in `docker-compose.yml` so the runtime image follows the machine running `./scripts/up` per FR-011 (missing)
 - [x] T011 CRITICAL Remove `TF_VAR_lambda_architecture` from the Terraform step in `.github/workflows/ci.yml` so the declared CPU does not choose the function image per FR-011 (contradicts)
+
+## Phase 8: Convergence
+
+- [x] T012 In `.github/workflows/ci.yml`, poll for up to two minutes until a pod with `app=jobs-worker` exists, and only then wait for it to be ready, so a first look with no pod is not a failure per FR-006 (contradicts)

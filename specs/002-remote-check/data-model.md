@@ -25,4 +25,5 @@ No new stored records. The check observes entities that already exist.
 ## Worker bound
 
 - **Resting count**: zero workers when nothing is waiting, already the deployment default
+- **Appearance**: after one job is waiting, the check waits until the count leaves zero and that worker is ready. A first look of zero is not a failure. No worker before the check ends is a failure.
 - **Upper bound**: five, read from the installed worker rule during the check

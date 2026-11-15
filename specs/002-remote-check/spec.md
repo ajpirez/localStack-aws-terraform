@@ -14,6 +14,7 @@
 
 - Q: When the check recreates the existing functions, which CPU must be able to run them? → A: The CPU of the machine running the check. This Mac keeps the CPU it already uses.
 - Q: When the check starts a function, does the declared CPU decide the image, or does the machine decide? → A: The machine decides. The declared CPU is ignored. On this Mac the image stays the CPU the functions already use.
+- Q: If a job is waiting and no worker is running yet, should the check wait for one to appear or fail on the first look? → A: Wait until at least one worker appears, then require that worker to be ready and to record the job.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -54,12 +55,12 @@ The check confirms the agreed capacity: no workers while idle is the resting sta
 
 **Why this priority**: The demand rule is already specified. The check must not silently change it.
 
-**Independent Test**: Read the configured upper bound and observe that a single waiting job brings up a worker.
+**Independent Test**: Read the configured upper bound and observe that a single waiting job brings up a worker. The check waits for that worker instead of failing on the first look.
 
 **Acceptance Scenarios**:
 
 1. **Given** the check has installed the worker rule, **When** the bound is read, **Then** the maximum number of workers is five.
-2. **Given** one job is waiting, **When** the check looks for workers, **Then** at least one worker is running.
+2. **Given** one job is waiting and no worker is running yet, **When** the check looks for workers, **Then** it waits until at least one worker appears and that worker is ready.
 
 ### Edge Cases
 
@@ -68,6 +69,7 @@ The check confirms the agreed capacity: no workers while idle is the resting sta
 - The existing order pipeline is still present after the infrastructure is recreated.
 - The developer machine keeps its current socket path. The remote machine uses its own socket only when the Mac socket is absent.
 - Recreating a function on a machine whose CPU cannot run it fails the check. The image that starts MUST match that machine. The declared CPU does not choose the image. This Mac keeps its current CPU.
+- A waiting job with no worker yet is not an immediate failure. The check waits until one worker appears and is ready. If none appears before the check ends, the check fails.
 
 ## Requirements *(mandatory)*
 
@@ -79,7 +81,7 @@ The check confirms the agreed capacity: no workers while idle is the resting sta
 - **FR-011**: A recreated function MUST start from the image that matches the CPU of the machine running the check. The declared CPU MUST NOT choose that image. On this Mac the image MUST remain the CPU the functions already use.
 - **FR-004**: The check MUST accept one job with a known identifier and MUST show that identifier in the worker record.
 - **FR-005**: The check MUST run the schedule path once and MUST show that submission as accepted.
-- **FR-006**: The check MUST confirm the worker upper bound is five and MUST observe at least one worker for a waiting job.
+- **FR-006**: The check MUST confirm the worker upper bound is five. For a waiting job it MUST wait until at least one worker appears and MUST require that worker to be ready.
 - **FR-007**: The access token MUST be supplied from outside the project files and MUST NOT be written into the repository.
 - **FR-008**: Starting the lab on this Mac MUST keep using the existing start command and the Mac socket.
 - **FR-009**: A missing token MUST fail the check.
