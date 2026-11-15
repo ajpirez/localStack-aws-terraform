@@ -1,12 +1,10 @@
 <!--
 Sync Impact Report
-- Version change: unversioned template → 1.0.0
-- Modified principles: none (initial ratification)
-- Added sections:
-  - Core Principles I–V
-  - Restricciones del entorno
-  - Flujo de trabajo
-  - Governance
+- Version change: 1.0.0 → 1.1.0
+- Modified principles:
+  - III. Cada cambio nuevo empieza por una spec → III. Spec Kit gobierna el cambio
+    (expands: new feature vs update to the active spec)
+- Added sections: none (Flujo de trabajo expanded in place)
 - Removed sections: none
 - Follow-up TODOs: none
 -->
@@ -35,15 +33,23 @@ desde `terraform/`. MUST NOT recrear esos recursos con scripts sueltos.
 Rationale: el estado de Terraform es la memoria de lo creado. Un script
 paralelo deja recursos que Terraform no conoce.
 
-### III. Cada cambio nuevo empieza por una spec
+### III. Spec Kit gobierna el cambio
 
-Una modificación de comportamiento MUST empezar en `/speckit-specify` y
-seguir el flujo de Spec Kit hasta `/speckit-implement`. La constitución y las
-specs existentes MUST leerse antes de planear. Un cambio que solo corrige
-redacción o formato MAY omitir una spec nueva.
+Una feature nueva MUST empezar en `/speckit-specify` y seguir el flujo de
+Spec Kit hasta `/speckit-implement`. La constitución y las specs existentes
+MUST leerse antes de planear.
+
+Una actualización de comportamiento que pertenece a la spec activa MUST
+seguir este orden, sin abrir una feature nueva: `/speckit-clarify`,
+`/speckit-plan`, `/speckit-converge` y `/speckit-implement`. MUST NOT
+cambiar el código de esa spec omitiendo ese orden.
+
+Un cambio que solo corrige redacción o formato MAY omitir Spec Kit.
 
 Rationale: Spec Kit está instalado para que el próximo cambio tenga
-especificación, plan y tareas antes del código.
+especificación, plan y tareas antes del código. Un arreglo sobre la spec
+activa también MUST dejar evidencia en clarify, plan y converge antes de
+implementar.
 
 ### IV. Cada rol tiene dos documentos y el mínimo permiso
 
@@ -84,7 +90,7 @@ de auditoría no hay forma de seguir el recorrido.
 
 ## Flujo de trabajo
 
-El orden para un cambio nuevo es:
+El orden para una feature nueva es:
 
 1. `/speckit-constitution` solo si cambia una regla de este documento.
 2. `/speckit-specify` describe el cambio.
@@ -96,8 +102,19 @@ El orden para un cambio nuevo es:
 8. `/speckit-implement` cambia el código.
 9. `/speckit-converge` compara el resultado con la spec.
 
-Los pasos 3, 5, 7 y 9 son opcionales. Implementar MUST ocurrir después de
-spec, plan y tareas. `terraform apply` MUST lanzarse desde `terraform/`.
+Para una feature nueva, los pasos 3, 5, 7 y 9 son opcionales. Implementar
+MUST ocurrir después de spec, plan y tareas.
+
+El orden para una actualización de la spec activa es:
+
+1. `/speckit-clarify` registra la decisión abierta en esa spec.
+2. `/speckit-plan` actualiza el plan y los artefactos de diseño.
+3. `/speckit-converge` deja en `tasks.md` el trabajo que aún falta.
+4. `/speckit-implement` completa esas tareas.
+
+Ese orden MUST ejecutarse completo. MUST NOT implementar un arreglo de la
+spec activa sin clarify, plan y converge previos. `terraform apply` MUST
+lanzarse desde `terraform/`.
 
 ## Governance
 
@@ -110,4 +127,4 @@ Una spec o un plan que toque IAM, mensajería o el runtime MUST indicar qué
 principio cumple. El informe de impacto al inicio de este archivo es material
 de revisión y MUST quitarse antes de commitear la enmienda.
 
-**Version**: 1.0.0 | **Ratified**: 2026-11-13 | **Last Amended**: 2026-11-13
+**Version**: 1.1.0 | **Ratified**: 2026-11-13 | **Last Amended**: 2026-11-15
