@@ -18,6 +18,12 @@
 
 **Alternatives considered**: Publishing port 4566 on every interface and using the bridge gateway is fragile on the kind network. Hard-coding a second IP in the manifests would break the Mac.
 
+## Decision: Lambdas follow the CPU of the machine running Terraform
+
+**Rationale**: The check failed with `exec format error` on `/var/runtime/bootstrap` because both functions were fixed to arm64 while the runner is x86_64. FR-011 says a recreated function must run on the CPU of the machine doing the check, and this Mac keeps the CPU it already uses. `lambda_architecture` defaults to `arm64`. The stack job sets `TF_VAR_lambda_architecture=x86_64`.
+
+**Alternatives considered**: Leaving both functions on arm64 keeps the Mac working and makes `terraform apply` fail on the runner. Switching the default to x86_64 would break invocation on this Mac.
+
 ## Decision: One job proves the worker; the schedule runs once
 
 **Rationale**: The worker deletes a message in under a second, and KEDA counts every 10 seconds. Twenty-five messages with the worker running do not stay visible long enough to show five pods. The check submits `job-ci-1`, waits until a worker logs it, and reads `maxReplicaCount` equal to 5. It then creates one Job from `jobs-schedule` so the schedule path runs without waiting for the next minute.

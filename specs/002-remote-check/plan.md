@@ -24,7 +24,7 @@ A GitHub Actions workflow reruns the local lab on a clean Ubuntu runner whenever
 
 **Performance Goals**: The stack job reports pass or fail within 40 minutes.
 
-**Constraints**: LocalStack only, `http://localhost:4566`, region `us-east-1`, credentials `test` / `test`. Pods cannot use the Mac address `192.168.65.254`. The workflow rewrites that address to the LocalStack container IP on the kind network before `kubectl apply`. Maximum workers stays 5. The check does not pause the worker to force five replicas.
+**Constraints**: LocalStack only, `http://localhost:4566`, region `us-east-1`, credentials `test` / `test`. Pods cannot use the Mac address `192.168.65.254`. The workflow rewrites that address to the LocalStack container IP on the kind network before `kubectl apply`. Maximum workers stays 5. The check does not pause the worker to force five replicas. Lambda CPU defaults to `arm64` for this Mac. The stack job sets `TF_VAR_lambda_architecture=x86_64` so LocalStack can invoke the functions on the runner.
 
 **Scale/Scope**: One workflow file, one socket choice in `scripts/up` and `docker-compose.yml`. No new queues and no change to the Nest handlers.
 

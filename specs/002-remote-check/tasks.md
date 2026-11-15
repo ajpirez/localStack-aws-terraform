@@ -46,6 +46,7 @@ description: "Task list for check the lab on every change"
 
 - [x] T004 [US1] Add the unit job and the stack job start (`./scripts/up`, `terraform apply`, image build, kind) in `.github/workflows/ci.yml`
 - [x] T005 [US1] In `.github/workflows/ci.yml`, replace `192.168.65.254` with the LocalStack IP on the kind network and accept `job-ci-1` through `POST /jobs`
+- [x] T009 [US1] Build the Lambda functions for the CPU of the machine running Terraform: default `arm64` in `terraform/provider.tf` and `terraform/lambda.tf`, and `TF_VAR_lambda_architecture=x86_64` in `.github/workflows/ci.yml`
 
 **Checkpoint**: User Story 1 is the stack job through the acceptance call.
 

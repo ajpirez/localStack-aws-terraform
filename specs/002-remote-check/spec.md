@@ -8,6 +8,12 @@
 
 **Input**: User description: "Cada cambio debe probarse solo, fuera de esta Mac, con el mismo circuito: cola, aceptación de un trabajo, un worker que lo registra, el horario que publica uno, y el límite de workers. El token no se guarda en el repositorio. El laboratorio local no cambia."
 
+## Clarifications
+
+### Session 2026-11-15
+
+- Q: When the check recreates the existing functions, which CPU must be able to run them? → A: The CPU of the machine running the check. This Mac keeps the CPU it already uses.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - A change is checked without the developer machine (Priority: P1)
@@ -60,6 +66,7 @@ The check confirms the agreed capacity: no workers while idle is the resting sta
 - A failed schedule submission is reported as a failed check, not as an acceptance.
 - The existing order pipeline is still present after the infrastructure is recreated.
 - The developer machine keeps its current socket path. The remote machine uses its own socket only when the Mac socket is absent.
+- Recreating a function on a machine whose CPU cannot run it fails the check. The function must be executable on that machine. This Mac keeps its current CPU.
 
 ## Requirements *(mandatory)*
 
@@ -68,6 +75,7 @@ The check confirms the agreed capacity: no workers while idle is the resting sta
 - **FR-001**: A published change MUST start a check without anyone running commands on the developer machine.
 - **FR-002**: The check MUST use only the local stand-in for AWS, in region `us-east-1`, with the test credentials. It MUST NOT call real AWS.
 - **FR-003**: The check MUST recreate the declared infrastructure, including the work queue and the existing order pipeline, from the same declarations used on the developer machine.
+- **FR-011**: A recreated function MUST be executable on the CPU of the machine running the check. On this Mac the functions MUST keep the CPU they already use.
 - **FR-004**: The check MUST accept one job with a known identifier and MUST show that identifier in the worker record.
 - **FR-005**: The check MUST run the schedule path once and MUST show that submission as accepted.
 - **FR-006**: The check MUST confirm the worker upper bound is five and MUST observe at least one worker for a waiting job.
@@ -101,3 +109,4 @@ The check confirms the agreed capacity: no workers while idle is the resting sta
 - The hosting service stores the access token and injects it only for the check.
 - One waiting job is enough to prove a worker appears. Filling the queue until five workers are visible stays a manual demonstration, not part of this check.
 - The order pipeline is recreated by the same declarations and is not redesigned.
+- This Mac already runs those functions on its own CPU. The remote check uses the CPU of its own machine. The declarations stay one set; only the CPU setting changes with the machine.
