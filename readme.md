@@ -252,6 +252,12 @@ kubectl -n keda patch deployment keda-operator --type strategic --patch-file k8s
 
 El API queda en `http://127.0.0.1:3000`. Los pods llegan a LocalStack por `host.docker.internal`, que en Docker Desktop es `192.168.65.254`. Ese alias también va en el operador de KEDA, porque es quien lee la profundidad de la cola. Los pasos de comprobación están en `specs/001-keda-jobs/quickstart.md`.
 
+## Comprobación automática
+
+Cada push ejecuta el workflow `ci`. El job de tests corre `bun test` en `jobs/`. El job de stack ejecuta `./scripts/up`, `terraform apply` y el cluster kind con KEDA, acepta un trabajo `job-ci-1` y lanza una vez el CronJob.
+
+En GitHub, el secreto del repositorio se llama `LOCALSTACK_AUTH_TOKEN` y usa el mismo valor que `.env`. No se commitea. En esta Mac `./scripts/up` sigue montando `~/.docker/run/docker.sock`. Los pasos están en `specs/002-remote-check/quickstart.md`.
+
 ## Spec Kit
 
 [Spec Kit](https://github.com/github/spec-kit) es el flujo de GitHub para escribir una especificación antes de implementar. En este repo está instalado para Cursor.
